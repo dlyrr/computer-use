@@ -56,10 +56,11 @@ let borders: BrowserWindow[] = [];
 /** True while the Escape hotkey is claimed, so we only release what we took. */
 let escapeHeld = false;
 
-// Window sizes include a 14px margin on every side for the glow.
-const PILL_W = 440;
-const PILL_H = 76;
-const PILL_H_EXPANDED = 580;
+// Window sizes include a 24px margin on every side so the glow fades to
+// nothing before the window edge instead of being cut into a rectangle.
+const PILL_W = 460;
+const PILL_H = 94;
+const PILL_H_EXPANDED = 600;
 
 // ------------------------------------------------------------------ plumbing
 
@@ -387,7 +388,7 @@ function positionPill(): void {
   // Top-centre, where it cannot be missed. Idle, the pill is hidden entirely
   // and comes back only from the tray.
   const x = wa.x + Math.round((wa.width - PILL_W) / 2);
-  const y = wa.y + 4;
+  const y = wa.y - 6;
   pill.setBounds({ x, y, width: PILL_W, height: h });
 }
 
