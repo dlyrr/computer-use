@@ -56,11 +56,10 @@ let borders: BrowserWindow[] = [];
 /** True while the Escape hotkey is claimed, so we only release what we took. */
 let escapeHeld = false;
 
-// Window sizes include a 24px margin on every side so the glow fades to
-// nothing before the window edge instead of being cut into a rectangle.
-const PILL_W = 460;
-const PILL_H = 94;
-const PILL_H_EXPANDED = 600;
+// Window sizes include an 8px margin around the capsule.
+const PILL_W = 430;
+const PILL_H = 62;
+const PILL_H_EXPANDED = 580;
 
 // ------------------------------------------------------------------ plumbing
 
@@ -367,6 +366,8 @@ function makePill(): void {
     skipTaskbar: true,
     alwaysOnTop: true,
     hasShadow: false,
+    roundedCorners: false,
+    thickFrame: false,
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false },
   });
   pill.setAlwaysOnTop(true, "screen-saver");
@@ -388,7 +389,7 @@ function positionPill(): void {
   // Top-centre, where it cannot be missed. Idle, the pill is hidden entirely
   // and comes back only from the tray.
   const x = wa.x + Math.round((wa.width - PILL_W) / 2);
-  const y = wa.y - 6;
+  const y = wa.y + 10;
   pill.setBounds({ x, y, width: PILL_W, height: h });
 }
 
@@ -422,6 +423,12 @@ function rebuildBorders(): void {
     w.loadURL(viewUrl("border"));
     w.once("ready-to-show", () => {
       w.showInactive();
+      // The taskbar is itself topmost; whoever asserts topmost last wins, and
+      // the bounds are re-applied because Windows can trim a shown window to
+      // the work area.
+      w.setBounds(d.bounds);
+      w.setAlwaysOnTop(true, "screen-saver", 1);
+      w.moveTop();
       push();
     });
     borders.push(w);

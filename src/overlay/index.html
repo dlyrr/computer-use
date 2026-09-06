@@ -71,22 +71,19 @@
       /* ------------------------------------------------------------ pill ----
          Collapsed it is one glowing blue capsule: "<agent> is using your
          computer - Esc to stop". Click it for the toolbar and the log. */
-      /* The window is PAD px larger than the pill on every side so the glow
-         is not clipped at the window edge. */
+      /* Nothing is painted outside the capsule: no shadow, no glow, so the
+         window around it is genuinely empty. */
       #pill {
         display: flex;
         flex-direction: column;
-        height: calc(100% - 48px);
-        margin: 24px;
+        height: calc(100% - 16px);
+        margin: 8px;
         background: rgba(12, 18, 34, 0.72);
         border: 1px solid rgba(255, 255, 255, 0.28);
         border-radius: 999px;
         overflow: hidden;
-        box-shadow: 0 0 0 1px rgba(63, 140, 255, 0.3), 0 0 18px rgba(63, 140, 255, 0.85), 0 4px 16px rgba(0, 0, 0, 0.3);
       }
       body.expanded #pill { border-radius: 18px; }
-      body.state-paused #pill { box-shadow: 0 0 0 1px rgba(255, 179, 64, 0.35), 0 0 18px rgba(255, 179, 64, 0.7), 0 4px 16px rgba(0, 0, 0, 0.3); }
-      body.state-ask #pill { box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.35), 0 0 18px rgba(255, 107, 107, 0.75), 0 4px 16px rgba(0, 0, 0, 0.3); }
       header {
         display: flex;
         align-items: center;
