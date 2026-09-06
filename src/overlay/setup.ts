@@ -116,8 +116,13 @@ function registerClaudeDesktop(): SetupReport["claudeDesktop"] {
 // -------------------------------------------------------------- Claude Code
 
 function exec(cmd: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
+  // `claude` is a .cmd shim on Windows, so it needs a shell - and a shell
+  // splits on spaces, so anything with a space ("C:\...\Computer Use.exe")
+  // has to be quoted by hand or the registration silently comes out in pieces.
+  const shell = process.platform === "win32";
+  const argv = shell ? args.map((a) => (/\s/.test(a) ? `"${a}"` : a)) : args;
   return new Promise((resolve) => {
-    execFile(cmd, args, { timeout: 20000, windowsHide: true, shell: process.platform === "win32" }, (err, stdout, stderr) =>
+    execFile(cmd, argv, { timeout: 20000, windowsHide: true, shell }, (err, stdout, stderr) =>
       resolve({ code: err ? ((err as any).code ?? 1) : 0, stdout: String(stdout), stderr: String(stderr) })
     );
   });
