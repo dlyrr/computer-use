@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "agent-overlay": {
+      "command": "node",
+      "args": ["C:\Users\you\Desktop\agent-overlay\dist\server\index.js"],
+      "env": {
+        "AGENT_OVERLAY_HOME": "C:\Users\you\.agent-overlay"
+      }
+    }
+  }
+}

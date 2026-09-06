@@ -1,0 +1,206 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:" />
+    <title>Computer Use</title>
+    <style>
+      :root {
+        --bg: #f3f0f2;
+        --card: #faf8f9;
+        --fg: #1d1d1f;
+        --dim: #6e6e73;
+        --blue: #0a7aff;
+        --line: rgba(0, 0, 0, 0.06);
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        font: 14px/1.4 "SF Pro Text", "SF Pro Display", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+        overflow: hidden;
+      }
+      /* Frameless: the whole top strip drags, buttons opt out. */
+      #drag { position: fixed; inset: 0 0 auto 0; height: 44px; -webkit-app-region: drag; }
+      /* mac traffic lights; green is greyed because the window is fixed-size */
+      #lights { position: fixed; top: 16px; left: 16px; display: flex; gap: 8px; -webkit-app-region: no-drag; }
+      #lights span { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.15); cursor: default; }
+      #lights .r { background: #ff5f57; } #lights .y { background: #febc2e; } #lights .g { background: #d9d9d9; }
+      #lights:hover span { background-image: radial-gradient(circle, rgba(0,0,0,0.45) 0 1.5px, transparent 1.6px); }
+      #lights:hover .g { background-image: none; }
+      main {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 52px 40px 22px;
+        overflow: hidden;
+      }
+      .icon {
+        flex: 0 0 auto;
+        width: 96px;
+        height: 96px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #ffd1ee 0%, #d6c6ff 48%, #b5e2ff 100%);
+        box-shadow: 0 12px 28px rgba(120, 90, 200, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+        display: grid;
+        place-items: center;
+      }
+      h1 { margin: 22px 0 6px; font-size: 27px; font-weight: 700; letter-spacing: -0.02em; font-family: "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+      .sub { color: var(--dim); text-align: center; max-width: 540px; margin: 0 0 26px; font-size: 14px; }
+      .rows { width: 100%; max-width: 660px; display: flex; flex-direction: column; gap: 10px; }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 16px 20px 16px 18px;
+        background: var(--card);
+        border-radius: 22px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--line);
+      }
+      .glyph { width: 54px; height: 54px; flex: 0 0 auto; display: grid; place-items: center; }
+      .glyph svg { width: 100%; height: 100%; }
+      .text { flex: 1 1 auto; min-width: 0; }
+      .text b { display: block; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+      .text span { color: var(--dim); display: block; margin-top: 2px; font-size: 13.5px; }
+      button {
+        -webkit-app-region: no-drag;
+        font: inherit;
+        font-weight: 600;
+        border: 0;
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-size: 14px;
+        cursor: pointer;
+        flex: 0 0 auto;
+        background: var(--blue);
+        color: #fff;
+        transition: filter 0.12s ease, transform 0.08s ease;
+      }
+      button:hover { filter: brightness(1.06); }
+      button:active { transform: scale(0.97); }
+      button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+      button.on { background: #e9e7ea; color: var(--fg); }
+      button.busy { opacity: 0.5; pointer-events: none; }
+      .row.off .glyph { filter: grayscale(1); opacity: 0.6; }
+      footer {
+        margin-top: auto;
+        padding-top: 18px;
+        width: 100%;
+        max-width: 660px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: var(--dim);
+        font-size: 13px;
+      }
+      footer label { display: flex; align-items: center; gap: 7px; cursor: pointer; -webkit-app-region: no-drag; }
+      footer a { color: var(--blue); cursor: pointer; text-decoration: none; -webkit-app-region: no-drag; }
+      footer .spacer { flex: 1; }
+      footer #done { padding: 8px 26px; margin-left: 6px; }
+      kbd { font: inherit; padding: 1px 6px; border-radius: 6px; background: #e9e7ea; color: var(--fg); }
+    </style>
+  </head>
+  <body>
+    <div id="drag"></div>
+    <div id="lights"><span class="r" id="closeBtn" title="Close"></span><span class="y" id="minBtn" title="Minimize"></span><span class="g"></span></div>
+    <main>
+      <div class="icon">
+        <svg width="50" height="50" viewBox="0 0 32 32" fill="none">
+          <path d="M9 5.5 L25 15.2 L17.6 17.4 L14.2 24.5 Z" fill="#fff" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(90,60,160,.35))"/>
+        </svg>
+      </div>
+      <h1 id="title">Enable Computer Use</h1>
+      <p class="sub" id="sub"></p>
+
+      <div class="rows">
+        <div class="row" data-key="input">
+          <div class="glyph">
+            <svg width="62" height="62" viewBox="0 0 62 62"><circle cx="31" cy="31" r="29" fill="#1a8cff"/><circle cx="31" cy="31" r="25" fill="none" stroke="#fff" stroke-width="2.5"/><circle cx="31" cy="17" r="3.5" fill="#fff"/><path d="M18 24h26M31 24v11M31 35l-7 12M31 35l7 12" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="text"><b>Accessibility</b><span id="d-input">Allows the agent to move the mouse and type</span></div>
+          <button></button>
+        </div>
+
+        <div class="row" data-key="screenshots">
+          <div class="glyph">
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#3a3a3c" stroke-width="2.6" stroke-linecap="round"><path d="M4 14V6a2 2 0 0 1 2-2h8M38 4h8a2 2 0 0 1 2 2v8M48 38v8a2 2 0 0 1-2 2h-8M14 48H6a2 2 0 0 1-2-2v-8"/><rect x="13" y="17" width="26" height="19" rx="4"/><circle cx="26" cy="26.5" r="5"/><path d="M20 17l2-4h8l2 4"/></svg>
+          </div>
+          <div class="text"><b>Screenshots</b><span id="d-screenshots">Uses screenshots to know where to click</span></div>
+          <button></button>
+        </div>
+
+        <div class="row" data-key="files">
+          <div class="glyph">
+            <svg width="54" height="54" viewBox="0 0 54 54" fill="none"><path d="M6 14a4 4 0 0 1 4-4h12l5 5h17a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4z" fill="#ffc94d"/><path d="M6 22h42v17a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4z" fill="#ffb300"/><path d="M20 30l3 3-3 3M26 36h8" stroke="#5a3d00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="text"><b>Files &amp; commands</b><span id="d-files"></span></div>
+          <button></button>
+        </div>
+
+        <div class="row" data-key="connect">
+          <div class="glyph">
+            <svg width="54" height="54" viewBox="0 0 54 54" fill="none" stroke="#3a3a3c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="44" height="30" rx="5"/><path d="M14 20l6 5-6 5M24 30h10M20 46h14"/></svg>
+          </div>
+          <div class="text"><b>Claude Code &amp; Claude Desktop</b><span id="d-connect">Checking…</span></div>
+          <button></button>
+        </div>
+      </div>
+
+      <footer>
+        <label><input type="checkbox" id="login" /> Start at login</label>
+        <a id="cfg">Open config folder</a>
+        <span class="spacer"></span>
+        <span>Stop any session with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>X</kbd></span>
+        <button id="done">Done</button>
+      </footer>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const rows = [...document.querySelectorAll(".row")];
+
+      function render(s) {
+        $("title").textContent = "Enable " + s.agent + " Computer Use";
+        $("sub").textContent =
+          s.agent + " Computer Use needs these permissions to use apps on your PC. " +
+          "They are only used when you ask " + s.agent + " to perform a task, and everything it does is shown on screen.";
+        $("d-input").textContent = "Allows " + s.agent + " to move the mouse and type";
+        $("d-screenshots").textContent = s.agent + " uses screenshots to know where to click";
+        $("d-files").textContent = "Inside " + s.roots.join(", ") + ". Commands and writes still ask first.";
+        $("d-connect").textContent = s.connect.detail;
+        $("login").checked = !!s.login;
+
+        for (const row of rows) {
+          const key = row.dataset.key;
+          const on = !!s[key === "connect" ? "connect" : key] && (key !== "connect" || s.connect.on);
+          const btn = row.querySelector("button");
+          row.classList.toggle("off", !on);
+          btn.className = on ? "on" : "";
+          btn.textContent = key === "connect" ? (on ? "✓ Connected" : "Connect") : on ? "✓ Allowed" : "Allow";
+          btn.disabled = key === "connect" && on;
+        }
+      }
+
+      for (const row of rows) {
+        const key = row.dataset.key;
+        row.querySelector("button").onclick = (e) => {
+          e.target.classList.add("busy");
+          window.overlay.send(key === "connect" ? { t: "setup:connect" } : { t: "setup:toggle", key, on: !row.classList.contains("off") ? false : true });
+        };
+      }
+      $("login").onchange = (e) => window.overlay.send({ t: "setup:login", on: e.target.checked });
+      $("cfg").onclick = () => window.overlay.send({ t: "setup:openConfig" });
+      $("closeBtn").onclick = () => window.overlay.send({ t: "setup:close" });
+      $("done").onclick = () => window.overlay.send({ t: "setup:close" });
+      $("minBtn").onclick = () => window.overlay.send({ t: "setup:min" });
+
+      window.overlay.onSetup(render);
+      window.overlay.send({ t: "setup:ready" });
+    </script>
+  </body>
+</html>

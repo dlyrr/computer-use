@@ -1,0 +1,18 @@
+{
+  "agentName": "Claude",
+  "roots": [
+    "C:\Users\you\Desktop",
+    "C:\Users\you\projects"
+  ],
+  "modes": {
+    "click": "allow",
+    "move": "allow",
+    "drag": "allow",
+    "scroll": "allow",
+    "key": "allow",
+    "focus_window": "allow",
+    "type_text": "prompt",
+    "run_command": "prompt",
+    "write_file": "prompt"
+  }
+}

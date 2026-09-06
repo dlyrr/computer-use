@@ -1,0 +1,9 @@
+node_modules/
+dist/
+scripts/win32.dll
+scripts/shot-*.jpg
+scripts/input-lock.exe
+scripts/agent-cursor.exe
+scripts/agent.cur
+build/icon.png
+release/

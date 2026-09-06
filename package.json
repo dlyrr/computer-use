@@ -1,0 +1,63 @@
+{
+  "name": "agent-overlay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local computer-use MCP server with a visible overlay that gates and displays agent input.",
+  "main": "dist/overlay/main.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/build-win32-dll.js && node scripts/make-assets.js && node scripts/copy-assets.js",
+    "watch": "tsc -w",
+    "overlay": "npm run build && electron .",
+    "server": "npm run build && node dist/server/index.js",
+    "postinstall": "npm run build",
+    "start": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "screenshot-desktop": "^1.15.0",
+    "sharp": "^0.33.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.5.0"
+  },
+  "productName": "Computer Use",
+  "build": {
+    "appId": "online.xocat.computeruse",
+    "productName": "Computer Use",
+    "asar": false,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "scripts/*.exe",
+      "scripts/win32.dll",
+      "scripts/win32.ps1",
+      "scripts/win32.cs",
+      "scripts/agent.cur",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": true,
+      "shortcutName": "Computer Use"
+    }
+  }
+}
