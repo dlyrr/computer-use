@@ -410,7 +410,7 @@
         if (view !== "pill") return;
 
         $("agent").textContent = s.active ? s.agent + " is using your computer" : s.agent + " is idle";
-        $("hint").textContent = s.prompt ? "needs your OK" : s.paused ? "paused" : s.active ? "Esc to stop" : "click for log";
+        $("hint").textContent = s.prompt ? "needs your OK" : s.paused ? "paused" : s.active ? "Esc to hide" : "click for log";
         $("action").textContent = s.paused ? "Paused - " + s.paused : s.current || "waiting";
         $("clock").textContent = fmt(s.elapsed || 0);
         $("pausedMsg").textContent = "Paused: " + (s.paused || "") + ". The agent cannot inject input until you resume.";

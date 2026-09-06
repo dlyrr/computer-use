@@ -234,6 +234,7 @@ function onServerMsg(m: ServerMsg): void {
       showSession();
       break;
     case "activity":
+      wakeOverlay();
       // The agent is about to press Escape itself; stop intercepting it.
       if (m.tool === "key" && combolIncludesEscape(m.args)) releaseEscape();
       state.current = m.summary;
@@ -245,6 +246,7 @@ function onServerMsg(m: ServerMsg): void {
       if (e) e.ok = m.ok;
       if (!m.ok) state.current = m.summary;
       if (state.active && !state.paused) grabEscape();
+      scheduleSleep();
       break;
     }
     case "permission":
@@ -269,7 +271,7 @@ function onServerMsg(m: ServerMsg): void {
  * shot when the agent explicitly asks to see the overlay.
  */
 function setHiddenFromCapture(hidden: boolean): void {
-  for (const w of BrowserWindow.getAllWindows()) {
+  for (const w of borders) {
     try {
       w.setContentProtection(hidden);
     } catch {
@@ -335,7 +337,47 @@ async function handleCapture(m: Extract<ServerMsg, { t: "capture" }>): Promise<v
   }
 }
 
+/**
+ * Sleep: everything the overlay shows (pill, edge glow, agent cursor) goes
+ * away, but the session stays connected. Escape does this on demand, and it
+ * happens on its own once the agent has been quiet for a few seconds, so the
+ * indicator is only up while something is actually happening. The agent's
+ * next tool call wakes it.
+ */
+let sleeping = false;
+let sleepTimer: NodeJS.Timeout | null = null;
+const IDLE_SLEEP_MS = 6000;
+
+function sleepOverlay(): void {
+  if (!state.active || sleeping) return;
+  sleeping = true;
+  if (sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
+  stopCursor();
+  stopInputLock();
+  for (const w of borders) if (!w.isDestroyed()) w.hide();
+  pill?.hide();
+  push();
+}
+
+function wakeOverlay(): void {
+  if (sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
+  if (!sleeping) return;
+  sleeping = false;
+  for (const w of borders) if (!w.isDestroyed()) w.showInactive();
+  if (!state.hidden) pill?.showInactive();
+  startInputLock();
+  startCursor();
+  push();
+}
+
+function scheduleSleep(): void {
+  if (sleepTimer) clearTimeout(sleepTimer);
+  sleepTimer = setTimeout(sleepOverlay, IDLE_SLEEP_MS);
+}
+
 function endSession(): void {
+  sleeping = false;
+  if (sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
   state.active = false;
   state.paused = null;
   state.prompt = null;
@@ -361,22 +403,28 @@ function makePill(): void {
     transparent: true,
     resizable: false,
     movable: true,
-    minimizable: false,
-    maximizable: false,
+    // A tool window: without WS_EX_TOOLWINDOW, Windows composites this
+    // transparent window with a dim box and a 1px DWM border around the whole
+    // rectangle. Measured against a capture, not guessed; minimizable /
+    // maximizable:false made it worse for the same reason.
+    type: "toolbar",
     skipTaskbar: true,
     alwaysOnTop: true,
     hasShadow: false,
     roundedCorners: false,
     thickFrame: false,
+    backgroundColor: "#00000000",
+    // "auto" lets DWM put a Mica/acrylic backdrop behind a transparent
+    // window on Windows 11, which showed up as a dim box around the capsule.
+    backgroundMaterial: "none",
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, nodeIntegration: false },
   });
   pill.setAlwaysOnTop(true, "screen-saver");
   pill.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  try {
-    pill.setContentProtection(true); // keep the indicator out of agent screenshots
-  } catch {
-    /* platform without capture exclusion */
-  }
+  // No content protection on the pill: on Windows, WDA_EXCLUDEFROMCAPTURE
+  // forces the window onto an opaque surface, which painted a dim box around
+  // the capsule. The pill therefore appears in the agent's screenshots; the
+  // border windows are still excluded.
   pill.loadURL(viewUrl("pill"));
   pill.on("closed", () => (pill = null));
   positionPill();
@@ -406,6 +454,7 @@ function rebuildBorders(): void {
       resizable: false,
       movable: false,
       focusable: false,
+      type: "toolbar", // same DWM box issue as the pill
       skipTaskbar: true,
       alwaysOnTop: true,
       hasShadow: false,
@@ -547,7 +596,7 @@ function startInputLock(): void {
     inputLock = child;
     child.stdout?.setEncoding("utf8");
     child.stdout?.on("data", (chunk: string) => {
-      if (chunk.includes("escape")) pause("you pressed Escape");
+      if (chunk.includes("escape")) sleepOverlay();
     });
     const gone = () => {
       if (inputLock === child) inputLock = null;
@@ -581,7 +630,7 @@ function stopInputLock(): void {
 
 function grabEscape(): void {
   if (escapeHeld) return;
-  escapeHeld = globalShortcut.register("Escape", () => pause("you pressed Escape"));
+  escapeHeld = globalShortcut.register("Escape", () => sleepOverlay());
 }
 
 function releaseEscape(): void {
