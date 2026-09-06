@@ -11,7 +11,7 @@ import { execFile } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { stateDir } from "../shared/protocol";
+import { stateDir, GATED_TOOLS } from "../shared/protocol";
 
 export interface SetupReport {
   configPath: string;
@@ -40,20 +40,13 @@ export function launchSpec(): { command: string; args: string[]; env: Record<str
 
 // ------------------------------------------------------------------- config
 
+// A fresh install grants nothing. The Computer Use window opens on first run
+// and the user allows each row themselves - that is the consent step.
 const DEFAULT_CONFIG = {
   agentName: "Claude",
   roots: [path.join(os.homedir(), "Desktop"), path.join(os.homedir(), "Documents")],
-  modes: {
-    click: "allow",
-    move: "allow",
-    drag: "allow",
-    scroll: "allow",
-    key: "allow",
-    focus_window: "allow",
-    type_text: "prompt",
-    run_command: "prompt",
-    write_file: "prompt",
-  },
+  screenshots: false,
+  modes: Object.fromEntries(GATED_TOOLS.map((t) => [t, "deny"])),
 };
 
 function ensureConfig(): { configPath: string; created: boolean } {

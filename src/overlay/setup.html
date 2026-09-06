@@ -86,6 +86,7 @@
       button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
       button.on { background: #e9e7ea; color: var(--fg); }
       button.busy { opacity: 0.5; pointer-events: none; }
+      button:disabled:not(.on) { background: #c9c7cb; color: #fff; cursor: not-allowed; filter: none; transform: none; }
       .row.off .glyph { filter: grayscale(1); opacity: 0.6; }
       footer {
         margin-top: auto;
@@ -174,6 +175,9 @@
         $("d-files").textContent = "Inside " + s.roots.join(", ") + ". Commands and writes still ask first.";
         $("d-connect").textContent = s.connect.detail;
         $("login").checked = !!s.login;
+        // Nothing works without input control, so Done waits for it.
+        $("done").disabled = !s.input;
+        $("done").title = s.input ? "" : "Allow Accessibility first";
 
         for (const row of rows) {
           const key = row.dataset.key;
