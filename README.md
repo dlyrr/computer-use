@@ -380,3 +380,7 @@ there with its arguments. Cross-check `~/.agent-overlay/audit.log`.
   is refused, so the indicator always names exactly one agent.
 - **Wayland is unsupported** for input and capture, by the compositor, not by us.
 - **Elevated Windows apps** cannot be driven from a non-elevated overlay.
+
+## For agents
+
+The guide agents get when they drive this machine is in [docs/agent-guide.md](docs/agent-guide.md).
